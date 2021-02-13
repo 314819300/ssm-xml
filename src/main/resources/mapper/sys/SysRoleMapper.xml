@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.db.sys.dao.SysRoleDao">
+
+	<sql id="queryWhereId">
+		<where>
+			<if test="name!=null and name!=''">
+				name like concat("%", #{name}, "%")
+			</if>
+		</where>
+	</sql>
+	<resultMap type="com.db.sys.vo.SysRoleMenuVo"
+		id="sysRoleMenuVo">
+		<!-- 一对多用collection,假如你在做关系查询的时候，把查询的结果作为另一个查询的条件时，这个条件的值不会存储，如果想要存储下来，需要写一个 条件映射-->
+		<id property="id" column="id"/>
+		<collection property="menuIds" column="id"
+			select="com.db.sys.dao.SysRoleMenuDao.findMenuIdsByRoleId"></collection>
+	</resultMap>
+	<!-- 根据id删除对应的角色 -->
+	<select id="findObjectById" resultMap="sysRoleMenuVo">
+		select id,name,note
+		from
+		sys_roles
+		where id=#{id}
+	</select>
+	<!-- 分页查询角色信息 -->
+	<select id="findPageObjects"
+		resultType="com.db.sys.entity.SysRole">
+		select *
+		from sys_roles
+		<include refid="queryWhereId" />
+		order by createdTime desc
+		limit #{startIndex},#{pageSize}
+	</select>
+	<!-- 查询角色的总记录数 -->
+	<select id="getRowCount" resultType="int">
+		select count(*)
+		from sys_roles
+		<include refid="queryWhereId" />
+	</select>
+	<!-- 插入角色信息 -->
+	<insert id="insertObject"
+		parameterType="com.db.sys.entity.SysRole" useGeneratedKeys="true"
+		keyProperty="id">
+		insert into sys_roles
+		(id,name,note,createdTime,modifiedTime,
+		createdUser,modifiedUser)
+		values
+		(null,#{name},#{note},now(),now(),
+		#{createdUser},#{modifiedUser})
+
+	</insert>
+
+	<!-- 根据id删除角色 -->
+	<delete id="deleteObject" parameterType="int">
+		delete from sys_roles
+		where id=#{id}
+	</delete>
+
+	<!-- 修改角色信息 -->
+	<update id="updateObject"
+		parameterType="com.db.sys.entity.SysRole">
+		update sys_roles
+		<set>
+			<if test="name!=null and name!=''">
+				name=#{name},
+			</if>
+			<if test="note!=null and note!=''">
+				note=#{note},
+			</if>
+			<if test="modifiedUser!=null and modifiedUser!=''">
+				modifiedUser=#{modifiedUser},
+			</if>
+			modifiedTime=now()
+		</set>
+		where id=#{id}
+	</update>
+
+	<!-- 查询角色名称，用来给用户分配角色 -->
+	<select id="findObjects" resultType="com.db.common.vo.CheckBox">
+		select id,name
+		from sys_roles
+	</select>
+
+</mapper>
